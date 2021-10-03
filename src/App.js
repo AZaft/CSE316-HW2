@@ -33,6 +33,7 @@ class App extends React.Component {
             return keyPair1.name.localeCompare(keyPair2.name);
         });
     }
+
     // THIS FUNCTION BEGINS THE PROCESS OF CREATING A NEW LIST
     createNewList = () => {
         // FIRST FIGURE OUT WHAT THE NEW LIST'S KEY AND NAME WILL BE
@@ -69,15 +70,14 @@ class App extends React.Component {
             // PUTTING THIS NEW LIST IN PERMANENT STORAGE
             // IS AN AFTER EFFECT
             this.db.mutationCreateList(newList);
+            this.db.mutationUpdateSessionData(this.state.sessionData);
         });
     }
 
-    renameItem = (oldName, newName) => {
-        if(oldName !== newName){
-            let items = this.state.currentList.items;
-            for(let i = 0;i< 5;i++){
-                if(items[i] === oldName) items[i] = newName;
-            }
+    renameItem = (key, newName) => {
+        let items = this.state.currentList.items;
+        if(items[key] !== newName){
+            items[key] = newName;
             this.db.mutationUpdateList(this.state.currentList);
         }
     }
@@ -153,6 +153,11 @@ class App extends React.Component {
         let modal = document.getElementById("delete-modal");
         modal.classList.remove("is-visible");
     }
+
+    moveItem(items, oldIndex, newIndex) {
+        items.splice(newIndex, 0, items.splice(oldIndex, 1)[0]);
+    }
+
     render() {
         return (
             <div id="app-root">
@@ -171,6 +176,8 @@ class App extends React.Component {
                 <Workspace
                     currentList={this.state.currentList} 
                     renameItemCallback = {this.renameItem}
+                    moveItemCallback = {this.moveItem}
+                    db = {this.db}
                     />
                 <Statusbar 
                     currentList={this.state.currentList} />

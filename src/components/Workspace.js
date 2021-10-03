@@ -9,8 +9,7 @@ export default class Workspace extends React.Component {
             itemInput: <></>,
             editItem: false,
             itemID: -1,
-            itemOldText: "",
-            itemNewText: "",
+            itemDragged: -1,
         }
     }
 
@@ -20,22 +19,23 @@ export default class Workspace extends React.Component {
         }
     }
 
-    handleItemEdit = (event) => {
-        let itemBeingEdited = event.target.id.slice(-1);
+    handleItemEdit = (event, index) => {
         this.setState({
             itemInput: <input autoFocus
-                    id={"item-" + itemBeingEdited}
-                    className='item-card'
+                    key={index}
+                    id={"item-" + index+1}
+                    className='top5-item'
                     type='text'
                     onBlur={this.updateItem}
                     onChange={this.updateItemText}
                     onKeyPress={this.handleKeyPress}
-                    defaultValue={this.props.currentList.items[itemBeingEdited-1]}
-                    style={{width: "94%"}}
+                    defaultValue={this.props.currentList.items[index]}
+                    style={{outlineColor: "#000000",outlineStyle: "solid"}}
+                    
             />,
             editItem: true,
-            itemID: itemBeingEdited-1,
-            itemOldText: this.props.currentList.items[itemBeingEdited-1],
+            itemID: index,
+            itemOldText: this.props.currentList.items[index],
         });
     }
 
@@ -44,53 +44,33 @@ export default class Workspace extends React.Component {
     }
 
     updateItem = (event) => {
-        console.log(this.state.itemOldText);
-        console.log(event.target.value);
-        this.props.renameItemCallback(this.state.itemOldText, event.target.value);
+        this.props.renameItemCallback(this.state.itemID, event.target.value);
         this.setState({editItem: false});
     }
 
+    handleDragStart = (index) => {
+        this.setState({itemDragged: index});
+    }
+
+    handleDragEnter = (event) => {
+        event.target.className = "top5-item-dragged-to";
+    }
+
+    handleDragLeave = (event) => {
+        event.target.className = "top5-item";
+    }
+
+    handleDrop = (event, index) => {
+        event.target.className = "top5-item";
+        this.props.moveItemCallback(this.props.currentList.items,this.state.itemDragged, index);
+        this.props.db.mutationUpdateList(this.props.currentList);
+        this.forceUpdate();
+    }
+
+
+
     render() {
-        let items = <></>;
-        if( this.props.currentList != null){
-           items = <div id="edit-items">
-                        <div 
-                            id = "item-1" 
-                            className = "top5-item"
-                            onDoubleClick={this.handleItemEdit}
-                        >
-                            {(this.state.editItem && this.state.itemID === 0 ) ? this.state.itemInput : this.props.currentList.items[0]}
-                        </div>
-                        <div
-                            id = "item-2" 
-                            className = "top5-item" 
-                            onDoubleClick={this.handleItemEdit}
-                        >
-                            {(this.state.editItem && this.state.itemID === 1 ) ? this.state.itemInput : this.props.currentList.items[1]}
-                        </div>
-                        <div
-                            id = "item-3" 
-                            className = "top5-item" 
-                            onDoubleClick={this.handleItemEdit}
-                        >
-                            {(this.state.editItem && this.state.itemID === 2 ) ? this.state.itemInput : this.props.currentList.items[2]}
-                        </div>
-                        <div
-                            id = "item-4" 
-                            className = "top5-item" 
-                            onDoubleClick={this.handleItemEdit}
-                        >
-                            {(this.state.editItem && this.state.itemID === 3 ) ? this.state.itemInput : this.props.currentList.items[3]}
-                        </div>  
-                        <div
-                            id = "item-5" 
-                            className = "top5-item" 
-                            onDoubleClick={this.handleItemEdit}
-                        >
-                            {(this.state.editItem && this.state.itemID === 4 ) ? this.state.itemInput : this.props.currentList.items[4]}
-                        </div>
-            </div>;
-        }
+
         return (
             <div id="top5-workspace">
                 <div id="workspace-edit">
@@ -101,7 +81,31 @@ export default class Workspace extends React.Component {
                         <div className="item-number">4.</div>
                         <div className="item-number">5.</div>
                     </div>
-                    {items}
+                    
+                    <div id="edit-items">
+                    {
+                        
+                        ((this.props.currentList != null) ? (this.props.currentList.items.map((item, index) => (
+                            (this.state.editItem && this.state.itemID === index)  ? this.state.itemInput :
+                            <div
+                                draggable
+                                key = {index}
+                                id = {"item-" + (index+1)}
+                                className = "top5-item"
+                                onDoubleClick={(e) => this.handleItemEdit(e, index)}
+                                onDragStart={() => this.handleDragStart(index)}
+                                onDragEnter={(e) => this.handleDragEnter(e)}
+                                onDragLeave={(e) => this.handleDragLeave(e)}
+                                onDrop={(e) => this.handleDrop(e,index)}
+                                onDragOver={(e) => e.preventDefault()}
+                            >
+                            {item}
+                            </div> 
+                        
+                        ))) : <></>)
+                    }
+                    </div>
+                    
                 </div>
             </div>
         )
