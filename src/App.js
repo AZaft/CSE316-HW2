@@ -39,42 +39,46 @@ class App extends React.Component {
 
     // THIS FUNCTION BEGINS THE PROCESS OF CREATING A NEW LIST
     createNewList = () => {
-        // FIRST FIGURE OUT WHAT THE NEW LIST'S KEY AND NAME WILL BE
-        let newKey = this.state.sessionData.nextKey;
-        let newName = "Untitled" + newKey;
+        if(this.state.currentList === null){
+            // FIRST FIGURE OUT WHAT THE NEW LIST'S KEY AND NAME WILL BE
+            let newKey = this.state.sessionData.nextKey;
+            let newName = "Untitled" + newKey;
+            // MAKE THE NEW LIST
+            let newList = {
+                key: newKey,
+                name: newName,
+                items: ["?", "?", "?", "?", "?"]
+            };
 
-        // MAKE THE NEW LIST
-        let newList = {
-            key: newKey,
-            name: newName,
-            items: ["?", "?", "?", "?", "?"]
-        };
+            // MAKE THE KEY,NAME OBJECT SO WE CAN KEEP IT IN OUR
+            // SESSION DATA SO IT WILL BE IN OUR LIST OF LISTS
+            let newKeyNamePair = { "key": newKey, "name": newName };
+            let updatedPairs = [...this.state.sessionData.keyNamePairs, newKeyNamePair];
+            this.sortKeyNamePairsByName(updatedPairs);
 
-        // MAKE THE KEY,NAME OBJECT SO WE CAN KEEP IT IN OUR
-        // SESSION DATA SO IT WILL BE IN OUR LIST OF LISTS
-        let newKeyNamePair = { "key": newKey, "name": newName };
-        let updatedPairs = [...this.state.sessionData.keyNamePairs, newKeyNamePair];
-        this.sortKeyNamePairsByName(updatedPairs);
-
-        // CHANGE THE APP STATE SO THAT IT THE CURRENT LIST IS
-        // THIS NEW LIST AND UPDATE THE SESSION DATA SO THAT THE
-        // NEXT LIST CAN BE MADE AS WELL. NOTE, THIS setState WILL
-        // FORCE A CALL TO render, BUT THIS UPDATE IS ASYNCHRONOUS,
-        // SO ANY AFTER EFFECTS THAT NEED TO USE THIS UPDATED STATE
-        // SHOULD BE DONE VIA ITS CALLBACK
-        this.setState(prevState => ({
-            currentList: newList,
-            sessionData: {
-                nextKey: prevState.sessionData.nextKey + 1,
-                counter: prevState.sessionData.counter + 1,
-                keyNamePairs: updatedPairs
-            }
-        }), () => {
-            // PUTTING THIS NEW LIST IN PERMANENT STORAGE
-            // IS AN AFTER EFFECT
-            this.db.mutationCreateList(newList);
-            this.db.mutationUpdateSessionData(this.state.sessionData);
-        });
+            // CHANGE THE APP STATE SO THAT IT THE CURRENT LIST IS
+            // THIS NEW LIST AND UPDATE THE SESSION DATA SO THAT THE
+            // NEXT LIST CAN BE MADE AS WELL. NOTE, THIS setState WILL
+            // FORCE A CALL TO render, BUT THIS UPDATE IS ASYNCHRONOUS,
+            // SO ANY AFTER EFFECTS THAT NEED TO USE THIS UPDATED STATE
+            // SHOULD BE DONE VIA ITS CALLBACK
+            this.setState(prevState => ({
+                currentList: newList,
+                sessionData: {
+                    nextKey: prevState.sessionData.nextKey + 1,
+                    counter: prevState.sessionData.counter + 1,
+                    keyNamePairs: updatedPairs
+                }
+            }), () => {
+                // PUTTING THIS NEW LIST IN PERMANENT STORAGE
+                // IS AN AFTER EFFECT
+                this.db.mutationCreateList(newList);
+                this.db.mutationUpdateSessionData(this.state.sessionData);
+                document.getElementById("add-list-button").className = "top5-button-disabled";
+                document.getElementById("close-button").className = "top5-button";
+            });
+        }
+        
     }
 
     renameItem = (key, newName) => {
@@ -129,6 +133,7 @@ class App extends React.Component {
             this.tps.clearAllTransactions();
             this.updateUndoRedo();
             document.getElementById("close-button").className = "top5-button";
+            document.getElementById("add-list-button").className = "top5-button-disabled";
         });
     }
     // THIS FUNCTION BEGINS THE PROCESS OF CLOSING THE CURRENT LIST
@@ -142,6 +147,7 @@ class App extends React.Component {
             this.tps.clearAllTransactions();
             this.updateUndoRedo();
             document.getElementById("close-button").className = "top5-button-disabled";
+            document.getElementById("add-list-button").className = "top5-button";
         });
     }
     deleteList = (pair) =>{
@@ -179,7 +185,9 @@ class App extends React.Component {
                 keyNamePairs: currentPairs
             }
         }), () => {
-            if(this.state.currentList.key === this.state.listKeyPairMarkedForDeletion.key) this.closeCurrentList();
+            if(this.state.currentList != null){
+                if(this.state.currentList.key === this.state.listKeyPairMarkedForDeletion.key) this.closeCurrentList();
+            }
             this.db.queryRemoveList(this.state.listKeyPairMarkedForDeletion.key);
             this.db.mutationUpdateSessionData(this.state.sessionData);
             let modal = document.getElementById("delete-modal");
