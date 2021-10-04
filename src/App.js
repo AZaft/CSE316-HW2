@@ -223,6 +223,16 @@ class App extends React.Component {
     }
 
     render() {
+        let self = this;
+        document.onkeydown=function(e){
+            if(e.ctrlKey && e.key === "z") {
+                self.undo();
+            }
+            if(e.ctrlKey && e.key === "y") {
+                self.redo();
+            }
+        }
+
         return (
             <div id="app-root">
                 <Banner 
@@ -230,6 +240,7 @@ class App extends React.Component {
                     closeCallback={this.closeCurrentList}
                     undoCallback = {this.undo}
                     redoCallback = {this.redo}
+                    ctrlKeyCallback = {this.ctrlKey}
                     />
                 <Sidebar
                     heading='Your Lists'

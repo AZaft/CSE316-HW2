@@ -78,8 +78,6 @@ export default class Workspace extends React.Component {
 
     }
 
-
-
     render() {
         return (
             <div id="top5-workspace">
@@ -108,6 +106,7 @@ export default class Workspace extends React.Component {
                                 onDragLeave={(e) => this.handleDragLeave(e)}
                                 onDrop={(e) => this.handleDrop(e,index)}
                                 onDragOver={(e) => e.preventDefault()}
+                                onKeyDown={(e) => this.handleKeyBoard(e)}
                             >
                             {item}
                             </div> 

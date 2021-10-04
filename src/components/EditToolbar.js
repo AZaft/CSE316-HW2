@@ -2,6 +2,7 @@ import React from "react";
 
 export default class EditToolbar extends React.Component {
     render() {
+    
         return (
             <div id="edit-toolbar">
                 <div 
