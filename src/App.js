@@ -122,17 +122,26 @@ class App extends React.Component {
             currentList: newCurrentList,
             sessionData: prevState.sessionData
         }), () => {
-            // ANY AFTER EFFECTS?
+            let button1 = document.getElementById("close-button");
+            button1.classList.remove("top5-button-disabled");
+            button1.classList.add("top5-button");
         });
     }
     // THIS FUNCTION BEGINS THE PROCESS OF CLOSING THE CURRENT LIST
     closeCurrentList = () => {
+        console.log("clicked close");
         this.setState(prevState => ({
             currentList: null,
             listKeyPairMarkedForDeletion : prevState.listKeyPairMarkedForDeletion,
             sessionData: this.state.sessionData
         }), () => {
             // ANY AFTER EFFECTS?
+            let button1 = document.getElementById("undo-button");
+            let button2 = document.getElementById("redo-button");
+            let button3 = document.getElementById("close-button");
+            button1.classList.add("top5-button-disabled");
+            button2.classList.add("top5-button-disabled");
+            button3.classList.add("top5-button-disabled");
         });
     }
     deleteList = (pair) =>{
@@ -182,7 +191,6 @@ class App extends React.Component {
     }
 
     render() {
-        console.log(this.state.sessionData);
         return (
             <div id="app-root">
                 <Banner 

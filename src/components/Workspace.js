@@ -70,7 +70,7 @@ export default class Workspace extends React.Component {
 
 
     render() {
-
+        
         return (
             <div id="top5-workspace">
                 <div id="workspace-edit">
@@ -82,9 +82,9 @@ export default class Workspace extends React.Component {
                         <div className="item-number">5.</div>
                     </div>
                     
-                    <div id="edit-items">
+                    <div id="edit-items"
+                    style ={{backgroundColor: "#669966"}}>
                     {
-                        
                         ((this.props.currentList != null) ? (this.props.currentList.items.map((item, index) => (
                             (this.state.editItem && this.state.itemID === index)  ? this.state.itemInput :
                             <div
