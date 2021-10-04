@@ -1,5 +1,8 @@
 import React from "react";
 
+import ChangeItem_Transaction from "./transactions/ChangeItem_Transaction.js";
+import MoveItem_Transaction from "./transactions/MoveItem_Transaction.js";
+
 export default class Workspace extends React.Component {
     
     constructor(props) {
@@ -15,7 +18,7 @@ export default class Workspace extends React.Component {
 
     handleKeyPress = (event) => {
         if (event.code === "Enter") {
-            this.updateItem(event);
+            this.updateItemTransaction(event);
         }
     }
 
@@ -26,7 +29,7 @@ export default class Workspace extends React.Component {
                     id={"item-" + index+1}
                     className='top5-item'
                     type='text'
-                    onBlur={this.updateItem}
+                    onBlur={this.updateItemTransaction}
                     onChange={this.updateItemText}
                     onKeyPress={this.handleKeyPress}
                     defaultValue={this.props.currentList.items[index]}
@@ -43,8 +46,11 @@ export default class Workspace extends React.Component {
         this.setState({itemNewText: event.target.value});
     }
 
-    updateItem = (event) => {
-        this.props.renameItemCallback(this.state.itemID, event.target.value);
+    updateItemTransaction = (event) => {
+        let OldName = this.props.currentList.items[this.state.itemID];
+        let transaction = new ChangeItem_Transaction(this.props.renameItemCallback, this.state.itemID, event.target.value,OldName);
+        this.props.tps.addTransaction(transaction);
+        this.props.updateUndoRedo();
         this.setState({editItem: false});
     }
 
@@ -62,15 +68,19 @@ export default class Workspace extends React.Component {
 
     handleDrop = (event, index) => {
         event.target.className = "top5-item";
-        this.props.moveItemCallback(this.props.currentList.items,this.state.itemDragged, index);
-        this.props.db.mutationUpdateList(this.props.currentList);
-        this.forceUpdate();
+
+        if(this.state.itemDragged !== index){
+            let transaction = new MoveItem_Transaction(this.props.moveItemCallback, this.props.currentList.items,this.state.itemDragged, index);
+            this.props.tps.addTransaction(transaction);
+            this.props.updateUndoRedo();
+            this.forceUpdate();
+        }
+
     }
 
 
 
     render() {
-        
         return (
             <div id="top5-workspace">
                 <div id="workspace-edit">

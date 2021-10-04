@@ -21,6 +21,10 @@ export default class DBManager {
         return JSON.parse(listString);
     }
 
+    queryRemoveList = (key) => {
+        localStorage.removeItem("top5-list-" + key);
+    }
+
     mutationCreateList = (list) => {
         this.mutationUpdateList(list);
     }

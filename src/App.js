@@ -1,5 +1,6 @@
 import React from 'react';
 import './App.css';
+import jsTPS from "../src/common/jsTPS.js";
 
 // IMPORT DATA MANAGEMENT AND TRANSACTION STUFF
 import DBManager from './db/DBManager';
@@ -20,6 +21,8 @@ class App extends React.Component {
 
         // GET THE SESSION DATA FROM OUR DATA MANAGER
         let loadedSessionData = this.db.queryGetSessionData();
+
+        this.tps = new jsTPS();
 
         // SETUP THE INITIAL STATE
         this.state = {
@@ -79,6 +82,7 @@ class App extends React.Component {
         if(items[key] !== newName){
             items[key] = newName;
             this.db.mutationUpdateList(this.state.currentList);
+           
         }
     }
 
@@ -122,29 +126,26 @@ class App extends React.Component {
             currentList: newCurrentList,
             sessionData: prevState.sessionData
         }), () => {
-            let button1 = document.getElementById("close-button");
-            button1.classList.remove("top5-button-disabled");
-            button1.classList.add("top5-button");
+            this.tps.clearAllTransactions();
+            this.updateUndoRedo();
+            document.getElementById("close-button").className = "top5-button";
         });
     }
     // THIS FUNCTION BEGINS THE PROCESS OF CLOSING THE CURRENT LIST
     closeCurrentList = () => {
-        console.log("clicked close");
         this.setState(prevState => ({
             currentList: null,
             listKeyPairMarkedForDeletion : prevState.listKeyPairMarkedForDeletion,
             sessionData: this.state.sessionData
         }), () => {
             // ANY AFTER EFFECTS?
-            let button1 = document.getElementById("undo-button");
-            let button2 = document.getElementById("redo-button");
-            let button3 = document.getElementById("close-button");
-            button1.classList.add("top5-button-disabled");
-            button2.classList.add("top5-button-disabled");
-            button3.classList.add("top5-button-disabled");
+            this.tps.clearAllTransactions();
+            this.updateUndoRedo();
+            document.getElementById("close-button").className = "top5-button-disabled";
         });
     }
     deleteList = (pair) =>{
+        console.log(pair.key);
         // SOMEHOW YOU ARE GOING TO HAVE TO FIGURE OUT
         // WHICH LIST IT IS THAT THE USER WANTS TO
         // DELETE AND MAKE THAT CONNECTION SO THAT THE
@@ -170,7 +171,6 @@ class App extends React.Component {
         let currentPairs = this.state.sessionData.keyNamePairs;
         let deleteIndex = currentPairs.indexOf(this.state.listKeyPairMarkedForDeletion);
         currentPairs.splice(deleteIndex,1);
-
         this.setState(prevState => ({
             currentList: prevState.currentList,
             sessionData: {
@@ -179,15 +179,47 @@ class App extends React.Component {
                 keyNamePairs: currentPairs
             }
         }), () => {
+            this.db.queryRemoveList(this.state.listKeyPairMarkedForDeletion.key);
             this.db.mutationUpdateSessionData(this.state.sessionData);
+            this.closeCurrentList();
+            let modal = document.getElementById("delete-modal");
+            modal.classList.remove("is-visible");
         });
-
-        let modal = document.getElementById("delete-modal");
-        modal.classList.remove("is-visible");
     }
 
-    moveItem(items, oldIndex, newIndex) {
+    moveItem= (items, oldIndex, newIndex) =>{
         items.splice(newIndex, 0, items.splice(oldIndex, 1)[0]);
+        this.db.mutationUpdateList(this.state.currentList);
+        
+    }
+
+    updateUndoRedo = () =>{
+        let undoButton = document.getElementById("undo-button");
+        let redoButton = document.getElementById("redo-button");
+
+        if(this.tps.hasTransactionToUndo()){
+            undoButton.className = "top5-button";
+        } else undoButton.className = "top5-button-disabled";
+
+        if(this.tps.hasTransactionToRedo()){
+            redoButton.className = "top5-button";
+        } else redoButton.className = "top5-button-disabled";
+    }
+
+    undo = () => {
+        if (this.tps.hasTransactionToUndo()) {
+            this.tps.undoTransaction();
+            this.updateUndoRedo();
+            this.forceUpdate();
+        }  
+    }
+
+    redo = () => {
+        if (this.tps.hasTransactionToRedo()) {
+            this.tps.doTransaction();
+            this.updateUndoRedo();
+            this.forceUpdate();
+        } 
     }
 
     render() {
@@ -195,7 +227,10 @@ class App extends React.Component {
             <div id="app-root">
                 <Banner 
                     title='Top 5 Lister'
-                    closeCallback={this.closeCurrentList} />
+                    closeCallback={this.closeCurrentList}
+                    undoCallback = {this.undo}
+                    redoCallback = {this.redo}
+                    />
                 <Sidebar
                     heading='Your Lists'
                     currentList={this.state.currentList}
@@ -209,7 +244,8 @@ class App extends React.Component {
                     currentList={this.state.currentList} 
                     renameItemCallback = {this.renameItem}
                     moveItemCallback = {this.moveItem}
-                    db = {this.db}
+                    tps = {this.tps}
+                    updateUndoRedo = {this.updateUndoRedo}
                     />
                 <Statusbar 
                     currentList={this.state.currentList} />
