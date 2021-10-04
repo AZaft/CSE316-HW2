@@ -179,9 +179,9 @@ class App extends React.Component {
                 keyNamePairs: currentPairs
             }
         }), () => {
+            if(this.state.currentList.key === this.state.listKeyPairMarkedForDeletion.key) this.closeCurrentList();
             this.db.queryRemoveList(this.state.listKeyPairMarkedForDeletion.key);
             this.db.mutationUpdateSessionData(this.state.sessionData);
-            this.closeCurrentList();
             let modal = document.getElementById("delete-modal");
             modal.classList.remove("is-visible");
         });
